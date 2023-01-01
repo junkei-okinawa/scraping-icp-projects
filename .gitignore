@@ -1,3 +1,4 @@
 /target
 /images/*
 /data/*
+Cargo.lock

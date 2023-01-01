@@ -145,7 +145,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // >>> scraping base settings
     dotenv().ok();
     env_logger::init();
-    let ENV = dotenv::var("ENVIRONMENT").expect("ENVIRONMENT must be set");
+    let get_screenshot = dotenv::var("GET_SCREENSHOT").expect("GET_SCREENSHOT must be set");
     let dapps_json_path = &env::var("DAPPS_JSON_PATH").expect("DAPPS_JSON_PATH must be set");
     let loading_data = dotenv::var("LOADING_DATA").expect("LOADING_DATA must be set");
     let duration_default_timeout: u64 = dotenv::var("DURATION_DEFAULT_TIMEOUT")
@@ -170,7 +170,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let dapps_list_xpath = &dotenv::var("DAPPS_LIST").expect("DAPPS_LIST must be set");
     let h3_elm_function_str = &dotenv::var("H3_ELM_FUNCTION").expect("H3_ELM_FUNCTION must be set");
     let logo_url_xpath = &dotenv::var("LOGO_URL").expect("LOGO_URL must be set");
-    let project_name_xpath = &dotenv::var("PROJECT_NAME").expect("PROJECT_NAME must be set");
     let data_social_xpath = &dotenv::var("DATA_SOCIAL").expect("DATA_SOCIAL must be set");
     let category_list_xpath = &dotenv::var("CATEGORY_LIST").expect("CATEGORY_LIST must be set");
     let description_xpath = &dotenv::var("DESCRIPTION").expect("DESCRIPTION must be set");
@@ -194,7 +193,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // <<< scraping base settings
 
     // >>> browser & tab settings
-    // 1920x1080のウィンドウサイズでブラウザを立ち上げ
+    // Launch your browser with a window size of 1920x1080
     let options = LaunchOptionsBuilder::default()
         .window_size(Some((1920, 1080)))
         .build()
@@ -244,10 +243,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // >>> get dapps project names
     sleep(Duration::from_secs(duration_loading_contents));
-    if ENV != "prod" {
+    if get_screenshot.parse().unwrap() {
         let png =
             tab.capture_screenshot(Page::CaptureScreenshotFormatOption::Png, None, None, true)?;
-        std::fs::write("./base_page.png", png)?;
+        std::fs::write("./images/base_page.png", png)?;
     }
     let elements = tab.find_elements(dapps_list_xpath)?;
 
@@ -324,10 +323,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                                 _ => warn!("not covered i: {}", i),
                             };
                         }
-                        Err(_) => break,
+                        Err(e) => {
+                            error!("faild scrape element index: {}.\ndapp project name: {}.\nInterrupt to collect information for the next dapp.\nError: {}", &i, &dapp.project_name, e);
+                            break;
+                        }
                     }
                 }
-                if ENV != "prod" {
+                if get_screenshot.parse().unwrap() {
                     // PNGでキャプチャを撮影してファイルに保存
                     let png = tab.capture_screenshot(
                         Page::CaptureScreenshotFormatOption::Png,

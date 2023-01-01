@@ -1,5 +1,5 @@
 [package]
-name = "scraper_hello"
+name = "scraping-icp-projects"
 version = "0.1.0"
 edition = "2021"
 
